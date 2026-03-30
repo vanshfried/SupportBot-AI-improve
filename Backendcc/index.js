@@ -41,8 +41,8 @@ app.use(
     rolling: true,
     cookie: {
       httpOnly: true,
-      secure: true, // ALWAYS true for ngrok + hosted frontend
-      sameSite: "none", // REQUIRED for cross-site cookies
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     },
   }),
