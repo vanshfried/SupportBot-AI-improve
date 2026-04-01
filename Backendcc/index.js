@@ -41,8 +41,8 @@ app.use(
     rolling: true,
     cookie: {
       httpOnly: true,
-      secure: true, // 🔥 only over HTTPS
-      sameSite: "none",
+      secure: false, // 🔥 IMPORTANT
+      sameSite: "lax", // 🔥 IMPORTANT
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     },
   }),
