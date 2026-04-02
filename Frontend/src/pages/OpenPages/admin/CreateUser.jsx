@@ -103,7 +103,7 @@ export default function CreateUser() {
     }
   };
 
-  return (
+   return (
     <div
       className={styles.page}
       style={{
@@ -115,102 +115,69 @@ export default function CreateUser() {
         <img src="/images/logo.png" alt="logo" className={styles.logo} />
         <h1>Create User</h1>
       </div>
-      ```
+
       {/* CARD */}
       <div className={styles.card}>
         <div className={styles.form}>
-          {/* NAME */}
-          <div className={styles.formGroup}>
-            <input
-              type="text"
-              required
-              value={form.name}
-              placeholder=" "
-              onChange={(e) => handleChange("name", e.target.value)}
-            />
-            <label>Full Name</label>
-          </div>
+          <input
+            value={form.name}
+            placeholder="Full Name"
+            onChange={(e) => handleChange("name", e.target.value)}
+          />
 
-          {/* EMAIL */}
-          <div className={styles.formGroup}>
-            <input
-              type="email"
-              required
-              value={form.email}
-              placeholder=" "
-              onChange={(e) => handleChange("email", e.target.value)}
-            />
-            <label>Email Address</label>
-          </div>
+          <input
+            value={form.email}
+            placeholder="Email Address"
+            onChange={(e) => handleChange("email", e.target.value)}
+          />
 
-          {/* PASSWORD */}
-          <div className={styles.formGroup}>
-            <input
-              type={showPassword ? "text" : "password"}
-              required
-              value={form.password}
-              placeholder=" "
-              onChange={(e) => handleChange("password", e.target.value)}
-            />
-            <label>Password</label>
+          <input
+            value={form.password}
+            placeholder="Password"
+            type="password"
+            onChange={(e) => handleChange("password", e.target.value)}
+          />
 
-            <span
-              className={styles.eye}
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </span>
-          </div>
-
-          {/* SUPERADMIN OPTIONS */}
+          {/* SUPERADMIN */}
           {currentUser?.role?.toLowerCase() === "superadmin" && (
             <>
-              <div className={styles.formGroup}>
-                <select
-                  value={roleToCreate}
-                  onChange={(e) => setRoleToCreate(e.target.value)}
-                >
-                  <option value="support">Support</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
+              <select
+                value={roleToCreate}
+                onChange={(e) => setRoleToCreate(e.target.value)}
+              >
+                <option value="support">Support</option>
+                <option value="admin">Admin</option>
+              </select>
 
-              <div className={styles.formGroup}>
-                <select
-                  value={form.department_id}
-                  onChange={(e) =>
-                    handleChange("department_id", Number(e.target.value))
-                  }
-                >
-                  <option value="">Select Department</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={form.department_id}
+                onChange={(e) =>
+                  handleChange("department_id", Number(e.target.value))
+                }
+              >
+                <option value="">Select Department</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
             </>
           )}
 
           {/* COUNTRY */}
-          <div className={styles.formGroup}>
-            <select
-              value={form.country_id}
-              onChange={(e) =>
-                handleChange("country_id", Number(e.target.value))
-              }
-            >
-              <option value="">Select Country</option>
-              {countries.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={form.country_id}
+            onChange={(e) => handleChange("country_id", Number(e.target.value))}
+          >
+            <option value="">Select Country</option>
+            {countries.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
 
-          {/* BUTTON */}
           <button
             className={styles.button}
             disabled={!isValid || loading}
@@ -220,7 +187,6 @@ export default function CreateUser() {
           </button>
         </div>
       </div>
-      ```
     </div>
   );
 }
