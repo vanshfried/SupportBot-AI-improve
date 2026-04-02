@@ -1,165 +1,56 @@
-/* =========================
-   1. ROOT PAGE
-========================= */
-.page {
-  min-height: 100vh;
-  width: 100%;
-  background: url("/images/oil-bg.jpg") no-repeat center/cover;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Inter", "Segoe UI", sans-serif;
-  position: relative;
+.container {
+  max-width: 420px;
+  margin: 50px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  font-family: sans-serif;
 }
 
-/* DARK OVERLAY */
-.page::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+h2 {
+  margin-bottom: 20px;
+  text-align: center;
 }
 
-/* =========================
-   2. HEADER
-========================= */
-.header {
-  position: absolute;
-  top: 24px;
-  left: 32px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  z-index: 2;
-}
-
-.logo {
-  height: 42px;
-  width: auto;
-}
-
-.header h1 {
-  color: #ffffff;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-/* =========================
-   3. FORM CARD
-========================= */
-.card {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 380px;
-
-  padding: 32px;
-  border-radius: 16px;
-
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(18px);
-
-  border: 1px solid rgba(255, 255, 255, 0.15);
-
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.6),
-    inset 0 0 10px rgba(255, 255, 255, 0.05);
-}
-
-/* =========================
-   4. FORM LAYOUT
-========================= */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
-/* =========================
-   5. INPUTS & SELECTS
-========================= */
-.form input,
-.form select {
-  width: 100%;
-  padding: 12px 14px;
-
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-
+input,
+select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
   font-size: 14px;
+  transition: 0.2s;
+}
+
+input:focus,
+select:focus {
+  border-color: #4f46e5;
   outline: none;
-
-  transition: all 0.25s ease;
 }
 
-/* Placeholder */
-.form input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-/* Focus */
-.form input:focus,
-.form select:focus {
-  border-color: #ff9a3c;
-  box-shadow: 0 0 0 2px rgba(255, 154, 60, 0.2);
-}
-
-/* Dropdown text fix */
-.form select option {
-  color: #000;
-}
-
-/* =========================
-   6. BUTTON
-========================= */
 .button {
   margin-top: 10px;
-  padding: 13px;
-
-  border-radius: 10px;
+  padding: 12px;
   border: none;
-
-  font-size: 15px;
+  border-radius: 8px;
+  background: #4f46e5;
+  color: white;
   font-weight: 600;
-  color: #fff;
-
-  background: linear-gradient(135deg, #ff7a18, #ffb347);
-
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: 0.2s;
 }
 
-/* Hover */
-.button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(255, 140, 0, 0.4);
+.button:hover {
+  background: #4338ca;
 }
 
-/* Active */
-.button:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-/* Disabled */
 .button:disabled {
-  background: #777;
+  background: #aaa;
   cursor: not-allowed;
-  box-shadow: none;
-}
-
-/* =========================
-   7. RESPONSIVE
-========================= */
-@media (max-width: 480px) {
-  .card {
-    margin: 0 16px;
-    padding: 24px;
-  }
-
-  .header {
-    left: 16px;
-  }
 }

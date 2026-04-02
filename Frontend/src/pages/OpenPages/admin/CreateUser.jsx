@@ -22,7 +22,7 @@ export default function CreateUser() {
   const [currentUser, setCurrentUser] = useState(null);
   const [roleToCreate, setRoleToCreate] = useState("support");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+
   // 🔥 current user
   useEffect(() => {
     getCurrentUser().then((data) => {
@@ -103,89 +103,77 @@ export default function CreateUser() {
     }
   };
 
-   return (
-    <div
-      className={styles.page}
-      style={{
-        backgroundImage: "url('/images/oil-bg.jpg')",
-      }}
-    >
-      {/* HEADER */}
-      <div className={styles.header}>
-        <img src="/images/logo.png" alt="logo" className={styles.logo} />
-        <h1>Create User</h1>
-      </div>
+  return (
+    <div className={styles.container}>
+      <h2>Create User</h2>
 
-      {/* CARD */}
-      <div className={styles.card}>
-        <div className={styles.form}>
-          <input
-            value={form.name}
-            placeholder="Full Name"
-            onChange={(e) => handleChange("name", e.target.value)}
-          />
+      <div className={styles.form}>
+        <input
+          value={form.name}
+          placeholder="Name"
+          onChange={(e) => handleChange("name", e.target.value)}
+        />
 
-          <input
-            value={form.email}
-            placeholder="Email Address"
-            onChange={(e) => handleChange("email", e.target.value)}
-          />
+        <input
+          value={form.email}
+          placeholder="Email"
+          onChange={(e) => handleChange("email", e.target.value)}
+        />
 
-          <input
-            value={form.password}
-            placeholder="Password"
-            type="password"
-            onChange={(e) => handleChange("password", e.target.value)}
-          />
+        <input
+          value={form.password}
+          placeholder="Password"
+          type="password"
+          onChange={(e) => handleChange("password", e.target.value)}
+        />
 
-          {/* SUPERADMIN */}
-          {currentUser?.role?.toLowerCase() === "superadmin" && (
-            <>
-              <select
-                value={roleToCreate}
-                onChange={(e) => setRoleToCreate(e.target.value)}
-              >
-                <option value="support">Support</option>
-                <option value="admin">Admin</option>
-              </select>
+        {/* SUPERADMIN ONLY */}
+        {currentUser?.role === "superadmin" && (
+          <>
+            <select
+              value={roleToCreate}
+              onChange={(e) => setRoleToCreate(e.target.value)}
+            >
+              <option value="support">Support</option>
+              <option value="admin">Admin</option>
+            </select>
 
-              <select
-                value={form.department_id}
-                onChange={(e) =>
-                  handleChange("department_id", Number(e.target.value))
-                }
-              >
-                <option value="">Select Department</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
+            <select
+              value={form.department_id}
+              onChange={(e) =>
+                handleChange("department_id", Number(e.target.value))
+              }
+            >
+              <option value="">Select Department</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
 
-          {/* COUNTRY */}
-          <select
-            value={form.country_id}
-            onChange={(e) => handleChange("country_id", Number(e.target.value))}
-          >
-            <option value="">Select Country</option>
-            {countries.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+        {/* COUNTRY */}
+        <select
+          value={form.country_id}
+          onChange={(e) => handleChange("country_id", Number(e.target.value))}
+        >
+          <option value="">Select Country</option>
+          {countries.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
 
-          <button
-            className={styles.button}
-            disabled={!isValid || loading}
-            onClick={handleSubmit}
-          >
-            {loading ? "Creating..." : "Create User"}
-          </button>
-        </div>
+        <button
+          className={styles.button}
+          disabled={!isValid || loading}
+          onClick={handleSubmit}
+        >
+          {loading ? "Creating..." : "Create User"}
+        </button>
       </div>
     </div>
   );
