@@ -39,10 +39,10 @@ router.post("/reply", async (req, res) => {
        WHERE c.sender_id = $1
        AND c.status = 'active'
        LIMIT 1`,
-      [to],
+      [ to ],
     );
 
-    const conversation = convoRes.rows[0];
+    const conversation = convoRes.rows[ 0 ];
 
     if (!conversation) {
       return res.status(404).json({
@@ -90,7 +90,7 @@ router.post("/reply", async (req, res) => {
            SET assigned_to = $1,
                assigned_role = $2
            WHERE id = $3 AND assigned_to IS NULL`,
-          [user.id, user.role, conversation.id],
+          [ user.id, user.role, conversation.id ],
         );
       }
 
@@ -103,7 +103,7 @@ router.post("/reply", async (req, res) => {
            WHERE id = $3
            AND last_agent_reply_at < NOW() - INTERVAL '20 minutes'
            RETURNING id`,
-          [user.id, user.role, conversation.id],
+          [ user.id, user.role, conversation.id ],
         );
 
         if (result.rowCount === 0) {
@@ -137,7 +137,7 @@ router.post("/reply", async (req, res) => {
          SET assigned_to = $1,
              assigned_role = $2
          WHERE id = $3`,
-        [user.id, user.role, conversation.id],
+        [ user.id, user.role, conversation.id ],
       );
     }
 
@@ -151,7 +151,7 @@ router.post("/reply", async (req, res) => {
          SET assigned_to = $1,
              assigned_role = $2
          WHERE id = $3`,
-        [user.id, user.role, conversation.id],
+        [ user.id, user.role, conversation.id ],
       );
     }
 
@@ -172,7 +172,7 @@ router.post("/reply", async (req, res) => {
        SET last_agent_reply_at = NOW(),
            last_agent_id = $1
        WHERE id = $2`,
-      [user.id, conversation.id],
+      [ user.id, conversation.id ],
     );
 
     return res.json({
@@ -213,10 +213,10 @@ router.post("/reopen", async (req, res) => {
     // =========================
     const convRes = await pool.query(
       `SELECT * FROM conversations WHERE id = $1`,
-      [conversation_id],
+      [ conversation_id ],
     );
 
-    const convo = convRes.rows[0];
+    const convo = convRes.rows[ 0 ];
 
     if (!convo) {
       return res.status(404).json({ error: "Not found" });
@@ -237,7 +237,7 @@ router.post("/reopen", async (req, res) => {
        WHERE sender_id = $1
        AND status = 'active'
        LIMIT 1`,
-      [convo.sender_id],
+      [ convo.sender_id ],
     );
 
     if (active.rows.length > 0) {
@@ -292,7 +292,7 @@ router.post("/reopen", async (req, res) => {
        WHERE id = $1
        AND status = 'ended'
        RETURNING id`,
-      [conversation_id],
+      [ conversation_id ],
     );
 
     if (result.rowCount === 0) {
@@ -337,10 +337,10 @@ router.post("/assign", async (req, res) => {
        FROM conversations c
        LEFT JOIN users u ON c.assigned_to = u.id
        WHERE c.id = $1`,
-      [conversation_id],
+      [ conversation_id ],
     );
 
-    const c = convo.rows[0];
+    const c = convo.rows[ 0 ];
 
     if (!c) {
       return res.status(404).json({ error: "Conversation not found" });
@@ -381,7 +381,7 @@ router.post("/assign", async (req, res) => {
                assigned_role = $2
            WHERE id = $3 AND assigned_to IS NULL
            RETURNING id, assigned_to, assigned_role`,
-          [user.id, user.role, conversation_id],
+          [ user.id, user.role, conversation_id ],
         );
 
         if (result.rowCount === 0) {
@@ -392,7 +392,7 @@ router.post("/assign", async (req, res) => {
 
         return res.json({
           success: true,
-          conversation: result.rows[0],
+          conversation: result.rows[ 0 ],
         });
       }
 
@@ -404,7 +404,7 @@ router.post("/assign", async (req, res) => {
          WHERE id = $3
          AND last_agent_reply_at < NOW() - INTERVAL '20 minutes'
          RETURNING id, assigned_to, assigned_role`,
-        [user.id, user.role, conversation_id],
+        [ user.id, user.role, conversation_id ],
       );
 
       if (result.rowCount === 0) {
@@ -415,7 +415,7 @@ router.post("/assign", async (req, res) => {
 
       return res.json({
         success: true,
-        conversation: result.rows[0],
+        conversation: result.rows[ 0 ],
       });
     }
 
@@ -444,12 +444,12 @@ router.post("/assign", async (req, res) => {
                assigned_role = $2
            WHERE id = $3
            RETURNING id, assigned_to, assigned_role`,
-          [user.id, user.role, conversation_id],
+          [ user.id, user.role, conversation_id ],
         );
 
         return res.json({
           success: true,
-          conversation: result.rows[0],
+          conversation: result.rows[ 0 ],
         });
       }
 
@@ -467,12 +467,12 @@ router.post("/assign", async (req, res) => {
                assigned_role = $2
            WHERE id = $3
            RETURNING id, assigned_to, assigned_role`,
-          [user.id, user.role, conversation_id],
+          [ user.id, user.role, conversation_id ],
         );
 
         return res.json({
           success: true,
-          conversation: result.rows[0],
+          conversation: result.rows[ 0 ],
         });
       }
 
@@ -517,10 +517,10 @@ router.post("/end", async (req, res) => {
     // =========================
     const convo = await pool.query(
       `SELECT * FROM conversations WHERE id = $1`,
-      [conversation_id],
+      [ conversation_id ],
     );
 
-    const c = convo.rows[0];
+    const c = convo.rows[ 0 ];
 
     if (!c) {
       return res.status(404).json({ error: "Not found" });
@@ -556,6 +556,20 @@ router.post("/end", async (req, res) => {
           error: "Wrong department",
         });
       }
+
+      // 🚫 cannot override superadmin
+      if (c.assigned_role === "superadmin") {
+        return res.status(403).json({
+          error: "Handled by superadmin",
+        });
+      }
+
+      // 🔒 optional: only allow ending if assigned to self
+      if (c.assigned_to && c.assigned_to !== user.id) {
+        return res.status(403).json({
+          error: "Not your assigned chat",
+        });
+      }
     }
 
     // 👑 SUPERADMIN → allowed
@@ -574,7 +588,7 @@ router.post("/end", async (req, res) => {
        WHERE id = $1
        AND status = 'active'
        RETURNING id`,
-      [conversation_id, user.id],
+      [ conversation_id, user.id ],
     );
 
     if (result.rowCount === 0) {
