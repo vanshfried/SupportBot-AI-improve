@@ -103,20 +103,34 @@ export default function CreateUser() {
     }
   };
 
-  return (
-    <div className={styles.container}>
-      <h2>Create User</h2>
+    return (
+  <div
+    className={styles.page}
+    style={{
+      backgroundImage: "url('/images/oil-bg.jpg')",
+    }}
+  >
+    {/* Overlay */}
+    <div className={styles.overlay} />
 
+    {/* Header */}
+    <div className={styles.header}>
+      <img src="/images/header-logo.png" alt="logo" />
+      <h1>Create New User</h1>
+    </div>
+
+    {/* Card */}
+    <div className={styles.card}>
       <div className={styles.form}>
         <input
           value={form.name}
-          placeholder="Name"
+          placeholder="Full Name"
           onChange={(e) => handleChange("name", e.target.value)}
         />
 
         <input
           value={form.email}
-          placeholder="Email"
+          placeholder="Email Address"
           onChange={(e) => handleChange("email", e.target.value)}
         />
 
@@ -134,8 +148,8 @@ export default function CreateUser() {
               value={roleToCreate}
               onChange={(e) => setRoleToCreate(e.target.value)}
             >
-              <option value="support">Support</option>
-              <option value="admin">Admin</option>
+              <option value="support">Support User</option>
+              <option value="admin">Admin User</option>
             </select>
 
             <select
@@ -175,6 +189,13 @@ export default function CreateUser() {
           {loading ? "Creating..." : "Create User"}
         </button>
       </div>
+
+      {/* Side Branding */}
+      <div className={styles.sideBrand}>
+        <img src="/images/logo.png" alt="brand" />
+        <p>Manage your team effortlessly</p>
+      </div>
     </div>
-  );
+  </div>
+);
 }
