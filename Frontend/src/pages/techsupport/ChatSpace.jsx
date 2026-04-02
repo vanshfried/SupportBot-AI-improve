@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from "./styles/ChatSpace.module.css";
 
 import {
@@ -17,9 +17,15 @@ function ChatSpace() {
   const [message, setMessage] = useState("");
   const [currentTime, setCurrentTime] = useState(() => Date.now());
 
-  const [modal, setModal] = useState(null); // 🔥 custom modal
+  const [modal, setModal] = useState(null);
+
+  // ✅ NEW: mobile view toggle
+  const [isMobileView, setIsMobileView] = useState(false);
 
   const currentUser = JSON.parse(localStorage.getItem("user"));
+  const messagesEndRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -28,6 +34,11 @@ function ChatSpace() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   // 🔁 Load conversations
   useEffect(() => {
     const loadConversations = async () => {
@@ -43,6 +54,10 @@ function ChatSpace() {
   // 🔥 Load messages
   const handleSelectChat = async (chat) => {
     setSelectedChat(chat);
+
+    // ✅ NEW: open chat screen on mobile
+    setIsMobileView(true);
+
     const data = await fetchMessages(chat.id);
     setMessages(data);
   };
@@ -67,10 +82,8 @@ function ChatSpace() {
       isSuperadminChat,
       minutesSinceReply,
 
-      // ❌ block takeover of superadmin chats
       cannotTakeover: isSuperadminChat && !isMine,
 
-      // 👨‍💻 support rule
       supportCanTakeover:
         currentUser.role === "support" &&
         selectedChat.assigned_to &&
@@ -80,21 +93,19 @@ function ChatSpace() {
       canReply:
         !isEnded && (isUnassigned || isMine || currentUser.role !== "support"),
 
-      disableAssign: isSuperadminChat && !isMine, // 🔥 important
+      disableAssign: isSuperadminChat && !isMine,
     };
   };
 
   const isEnded = selectedChat?.status === "ended";
   const chatState = getChatState();
 
-  // 🔥 MODAL HELPER
   const openModal = (text, action) => {
     setModal({ text, action });
   };
 
   const closeModal = () => setModal(null);
 
-  // 📤 SEND
   const handleSendReply = async (force = false) => {
     if (!message.trim()) return;
 
@@ -113,19 +124,16 @@ function ChatSpace() {
     }
   };
 
-  // 🟢 ASSIGN
   const handleAssign = async () => {
     if (!selectedChat) return;
 
     const isAssigned = selectedChat.assigned_to;
 
-    // ❌ block superadmin chat
     if (chatState.cannotTakeover) {
       openModal("❌ Cannot take over a Superadmin chat");
       return;
     }
 
-    // 🧑‍💼 ADMIN / 👑 SUPERADMIN CONFIRMATION
     if (isAssigned && !chatState.isMine) {
       openModal(
         `Take over chat from ${selectedChat.assigned_role}?`,
@@ -136,29 +144,40 @@ function ChatSpace() {
       return;
     }
 
-    // 🟢 normal assign
     await assignChat(selectedChat.id);
   };
 
-  // 🔚 END
   const handleEnd = () => {
     openModal("⚠️ Are you sure you want to END this chat?", async () => {
       await endSession(selectedChat.id);
     });
   };
 
-  // 🔁 REOPEN
   const handleReopen = () => {
     openModal("Reopen this chat?", async () => {
       await reopenChat(selectedChat.id);
     });
   };
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.changedTouches[0].screenX;
+  };
+
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].screenX;
+
+    if (touchEndX.current - touchStartX.current > 100) {
+      setIsMobileView(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
       {/* Sidebar */}
-      <div className={styles.sidebar}>
-
+      <div
+        className={`${styles.sidebar} ${
+          isMobileView ? styles.hideSidebar : ""
+        }`}
+      >
         <div className={styles.sidebarHeader}>
           <img src="images/logo.png" className={styles.logo} />
           <h3>Conversations</h3>
@@ -171,8 +190,9 @@ function ChatSpace() {
           return (
             <div
               key={chat.id}
-              className={`${styles.userItem} ${selectedChat?.id === chat.id ? styles.activeUser : ""
-                } ${isOwnedByOther ? styles.lockedChat : ""}`}
+              className={`${styles.userItem} ${
+                selectedChat?.id === chat.id ? styles.activeUser : ""
+              } ${isOwnedByOther ? styles.lockedChat : ""}`}
               onClick={() => handleSelectChat(chat)}
             >
               <div>
@@ -190,11 +210,27 @@ function ChatSpace() {
       </div>
 
       {/* Chat */}
-      <div className={styles.chat}>
+      <div
+        className={`${styles.chat} ${isMobileView ? styles.chatActive : ""}`}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className={styles.chatHeader}>
           {selectedChat ? (
             <>
-              <h3>{selectedChat.sender_id}</h3>
+              {/* ✅ NEW: Back button (mobile only) */}
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "10px" }}
+              >
+                <button
+                  className={styles.backBtn}
+                  onClick={() => setIsMobileView(false)}
+                >
+                  ←
+                </button>
+
+                <h3>{selectedChat.sender_id}</h3>
+              </div>
 
               <div className={styles.metaInfo}>
                 {selectedChat.assigned_to &&
@@ -250,6 +286,7 @@ function ChatSpace() {
               </div>
             );
           })}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Warning */}
