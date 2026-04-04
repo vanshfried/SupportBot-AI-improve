@@ -1,7 +1,6 @@
 import express from "express";
 import multer from "multer";
 import fs from "fs";
-import FormData from "form-data";
 import { sendMessage, uploadMedia } from "../../services/whatsapp.js";
 import { addMessage } from "../../store/conversations.js";
 import { requireAdmin } from "../../middleware/auth.js";

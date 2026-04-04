@@ -1,4 +1,6 @@
 import dotenv from "dotenv";
+import FormData from "form-data";
+import fs from "fs";
 dotenv.config();
 
 export async function sendMessage(to, message, imageId = null) {
