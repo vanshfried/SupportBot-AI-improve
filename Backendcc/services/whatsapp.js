@@ -61,11 +61,13 @@ export async function sendMessage(to, message, imageId = null) {
 export async function uploadMedia(filePath) {
   const formData = new FormData();
 
-  formData.set("messaging_product", "whatsapp");
+  // 🔥 read file as buffer
+  const fileBuffer = fs.readFileSync(filePath);
 
-  // 🔥 THIS IS THE REAL FIX
-  const file = await fileFromPath(filePath);
-  formData.set("file", file);
+  const blob = new Blob([fileBuffer]);
+
+  formData.append("file", blob, path.basename(filePath));
+  formData.append("messaging_product", "whatsapp");
 
   try {
     const response = await fetch(
@@ -76,7 +78,7 @@ export async function uploadMedia(filePath) {
           Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
         },
         body: formData,
-      }
+      },
     );
 
     const data = await response.json();
