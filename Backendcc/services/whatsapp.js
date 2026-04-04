@@ -4,7 +4,6 @@ import fs from "fs";
 import mime from "mime-types";
 import path from "path";
 dotenv.config();
-import undici from "undici";
 
 const { FormData, fileFromPath } = undici;
 
