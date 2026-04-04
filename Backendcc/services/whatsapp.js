@@ -48,8 +48,8 @@ export async function sendMessage(to, message, imageId = null) {
 
     return data.messages[0].id;
   } catch (err) {
-    console.error("❌ Media upload failed:", err.message);
-    return res.status(500).json({ error: err.message });
+    console.error("❌ sendMessage error:", err.message);
+    return null; // ✅ correct behavior
   }
 }
 
@@ -66,20 +66,16 @@ export async function uploadMedia(filePath) {
         method: "POST",
         headers: {
           Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+          ...formData.getHeaders(), // 🔥 THIS FIXES YOUR ERROR
         },
         body: formData,
       },
     );
 
-    const text = await response.text(); // 🔥 IMPORTANT
+    const text = await response.text();
     console.log("📤 RAW MEDIA RESPONSE:", text);
 
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      throw new Error("Invalid JSON from WhatsApp");
-    }
+    const data = JSON.parse(text);
 
     if (!response.ok) {
       throw new Error(data?.error?.message || "Media upload failed");
