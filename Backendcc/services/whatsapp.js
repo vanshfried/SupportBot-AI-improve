@@ -1,10 +1,12 @@
 import dotenv from "dotenv";
-import { FormData, fileFromPath } from "undici";
+import undici from "undici";
 import fs from "fs";
 import mime from "mime-types";
 import path from "path";
 dotenv.config();
+import undici from "undici";
 
+const { FormData, fileFromPath } = undici;
 
 export async function sendMessage(to, message, imageId = null) {
   try {
