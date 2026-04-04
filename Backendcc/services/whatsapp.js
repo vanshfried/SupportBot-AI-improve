@@ -62,36 +62,38 @@ export async function uploadMedia(filePath) {
 
   const fileBuffer = fs.readFileSync(filePath);
 
-  const mimeType = mime.lookup(filePath) || "application/octet-stream";
+  const mimeType = mime.lookup(filePath);
+
+  if (!mimeType) {
+    throw new Error("❌ Could not detect MIME type");
+  }
+
+  console.log("📂 File:", filePath);
+  console.log("📦 MIME:", mimeType);
 
   const blob = new Blob([fileBuffer], { type: mimeType });
 
   formData.append("file", blob, path.basename(filePath));
   formData.append("messaging_product", "whatsapp");
 
-  try {
-    const response = await fetch(
-      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/media`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-        },
-        body: formData,
+  const response = await fetch(
+    `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/media`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
       },
-    );
+      body: formData,
+    },
+  );
 
-    const data = await response.json();
+  const data = await response.json();
 
-    console.log("📤 MEDIA RESPONSE:", data);
+  console.log("📤 MEDIA RESPONSE:", data);
 
-    if (!response.ok) {
-      throw new Error(data?.error?.message || "Media upload failed");
-    }
-
-    return data.id;
-  } catch (err) {
-    console.error("❌ uploadMedia error:", err.message);
-    throw err;
+  if (!response.ok) {
+    throw new Error(data?.error?.message);
   }
+
+  return data.id;
 }

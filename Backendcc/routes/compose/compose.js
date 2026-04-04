@@ -6,7 +6,14 @@ import { addMessage } from "../../store/conversations.js";
 import { requireAdmin } from "../../middleware/auth.js";
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
 
 /**
  * 🔥 SEND (single OR multiple numbers)
