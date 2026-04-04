@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import FormData from "form-data";
+import { FormData, fileFromPath } from "undici";
 import fs from "fs";
 import mime from "mime-types";
 import path from "path";
@@ -59,14 +59,11 @@ export async function sendMessage(to, message, imageId = null) {
 export async function uploadMedia(filePath) {
   const formData = new FormData();
 
-  const mimeType = mime.lookup(filePath) || "image/jpeg";
+  formData.set("messaging_product", "whatsapp");
 
-  formData.append("file", fs.createReadStream(filePath), {
-    filename: path.basename(filePath), // ✅ FIXED
-    contentType: mimeType,
-  });
-
-  formData.append("messaging_product", "whatsapp");
+  // 🔥 THIS IS THE REAL FIX
+  const file = await fileFromPath(filePath);
+  formData.set("file", file);
 
   try {
     const response = await fetch(
@@ -75,16 +72,14 @@ export async function uploadMedia(filePath) {
         method: "POST",
         headers: {
           Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          ...formData.getHeaders(),
         },
         body: formData,
       }
     );
 
-    const text = await response.text();
-    console.log("📤 RAW MEDIA RESPONSE:", text);
+    const data = await response.json();
 
-    const data = JSON.parse(text);
+    console.log("📤 MEDIA RESPONSE:", data);
 
     if (!response.ok) {
       throw new Error(data?.error?.message || "Media upload failed");
