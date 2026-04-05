@@ -18,7 +18,7 @@ const upload = multer({ storage });
 /**
  * 🔥 SEND (single OR multiple numbers)
  */
-router.post("/send", requireAdmin, upload.single("image"), async (req, res) => {
+router.post("/send", upload.single("image"), async (req, res) => {
   let { to, message } = req.body;
   let imageId = null;
 
