@@ -1,12 +1,10 @@
 import dotenv from "dotenv";
-import undici from "undici";
+import FormData from "form-data";
 import fs from "fs";
 import mime from "mime-types";
 import path from "path";
 
 dotenv.config();
-
-const { FormData } = undici;
 
 const WHATSAPP_BASE = "https://graph.facebook.com/v19.0";
 
@@ -152,10 +150,11 @@ export async function uploadMedia(filePath) {
         method: "POST",
         headers: {
           Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+          ...formData.getHeaders(), // ✅ VERY IMPORTANT
         },
         body: formData,
       },
-      30000 // 30s timeout for uploads
+      30000,
     );
 
     const data = await response.json().catch(() => ({}));
