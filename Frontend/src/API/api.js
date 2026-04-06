@@ -8,7 +8,6 @@ const fetchWrapper = async (endpoint, options = {}) => {
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
-
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       credentials: "include",
       signal: controller.signal,
@@ -19,15 +18,17 @@ const fetchWrapper = async (endpoint, options = {}) => {
 
     const data = await response.json().catch(() => ({}));
 
-    
-
     if (!response.ok) {
-      throw {
+      const errorObj = {
         response: {
           status: response.status,
           data,
         },
       };
+
+      console.error("❌ API ERROR:", errorObj);
+
+      throw errorObj;
     }
 
     return {
@@ -35,9 +36,12 @@ const fetchWrapper = async (endpoint, options = {}) => {
       status: response.status,
     };
   } catch (err) {
+    console.error("❌ NETWORK ERROR:", err);
+
     if (err.name === "AbortError") {
       throw { message: "Request timeout" };
     }
+
     throw err;
   }
 };

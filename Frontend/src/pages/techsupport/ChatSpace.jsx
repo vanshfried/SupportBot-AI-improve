@@ -110,6 +110,12 @@ function ChatSpace() {
   const closeModal = () => setModal(null);
 
   const handleSendReply = async (force = false) => {
+    console.log("📤 Sending:", {
+      to: selectedChat.sender_id,
+      message,
+      file,
+      force,
+    });
     if (!message.trim() && !file) return;
 
     try {
@@ -122,6 +128,7 @@ function ChatSpace() {
       }
 
       await sendReply(formData, force); // 🔥 changed
+      console.log("✅ Message sent successfully");
 
       setMessage("");
       setFile(null);
@@ -129,8 +136,17 @@ function ChatSpace() {
       const data = await fetchMessages(selectedChat.id);
       setMessages(data);
     } catch (error) {
-      if (error?.takeover) {
-        openModal(`Take over chat from ${error.assigned_role}?`, () =>
+      console.error("❌ Send error:", error);
+
+      // 🔥 backend error message
+      const backendMsg =
+        error?.response?.data?.error || error?.message || "Unknown error";
+
+      alert(`❌ ${backendMsg}`);
+
+      // takeover logic
+      if (error?.response?.data?.error?.includes("active")) {
+        openModal(`Take over chat from ${selectedChat.assigned_role}?`, () =>
           handleSendReply(true),
         );
       }
