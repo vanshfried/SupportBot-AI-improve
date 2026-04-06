@@ -7,16 +7,10 @@ import API from "./api";
 export const sendReply = async (data, force = false) => {
   let res;
 
-  // ✅ If FormData (file upload)
   if (data instanceof FormData) {
-    res = await API.post("/agent/reply", data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  }
-  // ✅ fallback (text-only)
-  else {
+    // ✅ NO HEADERS
+    res = await API.post("/agent/reply", data);
+  } else {
     res = await API.post("/agent/reply", {
       ...data,
       force,
