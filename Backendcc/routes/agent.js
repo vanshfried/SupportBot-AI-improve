@@ -14,7 +14,8 @@ const upload = multer({ dest: "uploads/" });
 router.post("/reply", upload.single("file"), async (req, res) => {
   const { to, message } = req.body;
   const file = req.file;
-
+  console.log("BODY:", req.body);
+  console.log("FILE:", req.file);
   // =========================
   // ✅ VALIDATION
   // =========================
