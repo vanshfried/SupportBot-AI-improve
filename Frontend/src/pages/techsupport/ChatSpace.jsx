@@ -27,6 +27,8 @@ function ChatSpace() {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
+  const [file, setFile] = useState(null);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(Date.now());
@@ -107,11 +109,21 @@ function ChatSpace() {
   const closeModal = () => setModal(null);
 
   const handleSendReply = async (force = false) => {
-    if (!message.trim()) return;
+    if (!message.trim() && !file) return;
 
     try {
-      await sendReply(selectedChat.sender_id, message, force);
+      const formData = new FormData();
+      formData.append("to", selectedChat.sender_id);
+      formData.append("message", message);
+
+      if (file) {
+        formData.append("file", file);
+      }
+
+      await sendReply(formData, force);
+
       setMessage("");
+      setFile(null);
 
       const data = await fetchMessages(selectedChat.id);
       setMessages(data);
@@ -325,10 +337,24 @@ function ChatSpace() {
         {/* Input */}
         <div className={styles.inputBox}>
           <input
+            type="file"
+            onChange={(e) => setFile(e.target.files[0])}
+            disabled={!chatState.canReply}
+          />
+
+          {file && (
+            <div style={{ fontSize: "12px" }}>
+              📎 {file.name}
+              <button onClick={() => setFile(null)}>❌</button>
+            </div>
+          )}
+
+          <input
             className={styles.input}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             disabled={!chatState.canReply}
+            placeholder="Type a message..."
           />
 
           <button

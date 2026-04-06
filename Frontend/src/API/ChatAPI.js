@@ -4,12 +4,24 @@ import API from "./api";
 /* ========================
    SEND AGENT MESSAGE
 ======================== */
-export const sendReply = async (to, message, force = false) => {
-  const res = await API.post("/agent/reply", {
-    to,
-    message,
-    force, // 🔥 ADD THIS
-  });
+export const sendReply = async (data, force = false) => {
+  let res;
+
+  // ✅ If FormData (file upload)
+  if (data instanceof FormData) {
+    res = await API.post("/agent/reply", data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  }
+  // ✅ fallback (text-only)
+  else {
+    res = await API.post("/agent/reply", {
+      ...data,
+      force,
+    });
+  }
 
   return res.data;
 };
