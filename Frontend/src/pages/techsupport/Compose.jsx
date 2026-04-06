@@ -88,11 +88,7 @@ function Compose() {
     try {
       setLoading(true);
 
-      console.log("📤 Sending payload:", {
-        numbers: numberList,
-        message,
-        file,
-      });
+      
 
       const formData = new FormData();
       formData.append("to", JSON.stringify(numberList));

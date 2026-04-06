@@ -1,16 +1,32 @@
 // backend/routes/agent.js
 import express from "express";
-import { sendMessage } from "../services/whatsapp.js";
+import { sendMessage, uploadMedia } from "../services/whatsapp.js";
 import { addMessage } from "../store/conversations.js";
 import { pool } from "../db.js";
+import multer from "multer";
+import fs from "fs";
+import path from "path";
 
 const router = express.Router();
 
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    const safeName = Date.now() + "-" + file.originalname.replace(/\s+/g, "_");
+    cb(null, safeName);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 100 * 1024 * 1024 },
+});
 /**
  * 📤 REPLY TO USER
  */
-router.post("/reply", async (req, res) => {
+router.post("/reply", upload.single("file"), async (req, res) => {
   const { to, message } = req.body;
+  const file = req.file;
 
   // =========================
   // ✅ VALIDATION
@@ -19,8 +35,11 @@ router.post("/reply", async (req, res) => {
     return res.status(400).json({ error: "Invalid recipient" });
   }
 
-  if (!message || !message.trim()) {
-    return res.status(400).json({ error: "Message required" });
+  // ✅ allow message OR file (IMPORTANT FIX)
+  if ((!message || !message.trim()) && !file) {
+    return res.status(400).json({
+      error: "Message or file is required",
+    });
   }
 
   const user = req.session.user;
@@ -30,7 +49,7 @@ router.post("/reply", async (req, res) => {
 
   try {
     // =========================
-    // 📥 GET ACTIVE CONVERSATION ONLY
+    // 📥 GET ACTIVE CONVERSATION
     // =========================
     const convoRes = await pool.query(
       `SELECT c.*, u.role AS assigned_role
@@ -63,7 +82,6 @@ router.post("/reply", async (req, res) => {
     // 👨‍💻 SUPPORT RULES
     // =========================
     if (user.role === "support") {
-      // dept + country restriction
       if (
         user.department_id !== conversation.department_id ||
         user.country_id !== conversation.country_id
@@ -73,7 +91,6 @@ router.post("/reply", async (req, res) => {
         });
       }
 
-      // cannot override admin/superadmin
       if (
         conversation.assigned_role === "admin" ||
         conversation.assigned_role === "superadmin"
@@ -124,14 +141,12 @@ router.post("/reply", async (req, res) => {
         });
       }
 
-      // cannot override superadmin
       if (conversation.assigned_role === "superadmin") {
         return res.status(403).json({
           error: "Handled by superadmin",
         });
       }
 
-      // force takeover
       await pool.query(
         `UPDATE conversations
          SET assigned_to = $1,
@@ -145,7 +160,6 @@ router.post("/reply", async (req, res) => {
     // 👑 SUPERADMIN RULES
     // =========================
     if (user.role === "superadmin") {
-      // always takeover
       await pool.query(
         `UPDATE conversations
          SET assigned_to = $1,
@@ -156,13 +170,56 @@ router.post("/reply", async (req, res) => {
     }
 
     // =========================
+    // 📤 HANDLE MEDIA (🔥 NEW)
+    // =========================
+    let media = null;
+
+    if (file) {
+      try {
+        const uploadRes = await uploadMedia(file.path);
+
+        media = {
+          id: uploadRes.id,
+          mimeType: uploadRes.mimeType,
+          filename: uploadRes.filename,
+        };
+      } catch (err) {
+        // cleanup on failure
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+
+        return res.status(500).json({
+          error: err.message,
+        });
+      }
+
+      // cleanup after upload
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    }
+
+    // =========================
     // 📤 SEND MESSAGE
     // =========================
-    const cleanMessage = message.trim();
+    const cleanMessage = message?.trim() || null;
 
-    const messageId = await sendMessage(to, cleanMessage);
+    const messageId = await sendMessage(
+      to,
+      cleanMessage,
+      media, // 🔥 key change
+    );
 
-    await addMessage(to, "outgoing", cleanMessage, messageId, "sent");
+    if (!messageId) {
+      return res.status(500).json({
+        error: "Failed to send message",
+      });
+    }
+
+    await addMessage(
+      to,
+      "outgoing",
+      cleanMessage || "[media]",
+      messageId,
+      "sent",
+    );
 
     // =========================
     // ⏱️ TRACK ACTIVITY

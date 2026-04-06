@@ -74,6 +74,11 @@ router.post(
   async (req, res) => {
     let { to, message } = req.body;
 
+    console.log("📥 Incoming request:", {
+      to,
+      message,
+      file: req.file?.originalname,
+    });
 
     // ✅ normalize numbers
     const numbers = normalizeNumbers(to);

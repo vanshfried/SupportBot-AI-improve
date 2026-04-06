@@ -27,6 +27,9 @@ function ChatSpace() {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
+  const [file, setFile] = useState(null);
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(Date.now());
@@ -107,11 +110,21 @@ function ChatSpace() {
   const closeModal = () => setModal(null);
 
   const handleSendReply = async (force = false) => {
-    if (!message.trim()) return;
+    if (!message.trim() && !file) return;
 
     try {
-      await sendReply(selectedChat.sender_id, message, force);
+      const formData = new FormData();
+      formData.append("to", selectedChat.sender_id);
+      formData.append("message", message);
+
+      if (file) {
+        formData.append("file", file); // 🔥 SAME AS COMPOSE
+      }
+
+      await sendReply(formData, force); // 🔥 changed
+
       setMessage("");
+      setFile(null);
 
       const data = await fetchMessages(selectedChat.id);
       setMessages(data);
@@ -329,7 +342,27 @@ function ChatSpace() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             disabled={!chatState.canReply}
+            placeholder="Type a message..."
           />
+
+          {/* 📎 FILE INPUT */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={(e) => {
+              const selected = e.target.files[0];
+              if (!selected) return;
+
+              if (selected.size > 100 * 1024 * 1024) {
+                alert("File too large (max 100MB)");
+                return;
+              }
+
+              setFile(selected);
+            }}
+          />
+
+          {file && <div style={{ fontSize: "12px" }}>📎 {file.name}</div>}
 
           <button
             className={styles.sendBtn}
