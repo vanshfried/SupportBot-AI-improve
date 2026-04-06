@@ -8,7 +8,6 @@ const fetchWrapper = async (endpoint, options = {}) => {
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
-    console.log("🌐 API Request:", endpoint, options);
 
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       credentials: "include",
