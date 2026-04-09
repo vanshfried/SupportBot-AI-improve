@@ -104,15 +104,24 @@ export async function addMessage(
   text,
   whatsappMessageId = null,
   status = null,
+  media = null,
 ) {
   try {
     const conversationId = await getOrCreateConversation(phone);
 
     await pool.query(
       `INSERT INTO messages 
-       (conversation_id, direction, text, whatsapp_message_id, status)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [conversationId, direction, text, whatsappMessageId, status],
+(conversation_id, direction, text, whatsapp_message_id, status, media_id, media_type)
+VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        conversationId,
+        direction,
+        text,
+        whatsappMessageId,
+        status,
+        media?.mediaId || null,
+        media?.mediaType || null,
+      ],
     );
 
     console.log("✅ Saved:", phone, direction, "→", conversationId);
@@ -128,11 +137,11 @@ export async function getMessagesByConversationId(conversationId) {
   try {
     const result = await pool.query(
       `
-      SELECT direction, text, status, created_at
-      FROM messages
-      WHERE conversation_id = $1
-      ORDER BY created_at ASC
-      `,
+  SELECT direction, text, status, created_at, media_id, media_type
+  FROM messages
+  WHERE conversation_id = $1
+  ORDER BY created_at ASC
+  `,
       [conversationId],
     );
 

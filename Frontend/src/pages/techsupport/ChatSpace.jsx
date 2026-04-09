@@ -298,8 +298,54 @@ function ChatSpace() {
                 <div
                   className={isAgent ? styles.agentMessage : styles.userMessage}
                 >
-                  {msg.text}
+                  {/* TEXT */}
+                  {/* TEXT */}
+                  {msg.text && <div>{msg.text}</div>}
 
+                  {/* IMAGE */}
+                  {msg.media_type === "image" && msg.media_id && (
+                    <img
+                      src={`${import.meta.env.VITE_BACKEND_URL}/webhook/media/${msg.media_id}`}
+                      alt="media"
+                      style={{
+                        maxWidth: "200px",
+                        borderRadius: "8px",
+                        marginTop: "5px",
+                      }}
+                    />
+                  )}
+
+                  {/* VIDEO */}
+                  {msg.media_type === "video" && msg.media_id && (
+                    <video controls width="200" style={{ marginTop: "5px" }}>
+                      <source
+                        src={`${import.meta.env.VITE_BACKEND_URL}/webhook/media/${msg.media_id}`}
+                      />
+                    </video>
+                  )}
+
+                  {/* AUDIO */}
+                  {msg.media_type === "audio" && msg.media_id && (
+                    <audio controls style={{ marginTop: "5px" }}>
+                      <source
+                        src={`${import.meta.env.VITE_BACKEND_URL}/webhook/media/${msg.media_id}`}
+                      />
+                    </audio>
+                  )}
+
+                  {/* DOCUMENT */}
+                  {msg.media_type === "document" && msg.media_id && (
+                    <a
+                      href={`${import.meta.env.VITE_BACKEND_URL}/webhook/media/${msg.media_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: "block", marginTop: "5px" }}
+                    >
+                      📄 Download File
+                    </a>
+                  )}
+
+                  {/* STATUS */}
                   {isAgent && (
                     <span className={styles.status}>
                       {msg.status === "sent" && "✓"}

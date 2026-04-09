@@ -2,7 +2,7 @@
 import express from "express";
 import { pool } from "../db.js";
 
-import { sendMessage } from "../services/whatsapp.js";
+import { sendMessage, getMediaUrl } from "../services/whatsapp.js";
 import { processMessage } from "../services/ai.js";
 
 import {
@@ -11,7 +11,10 @@ import {
   getOrCreateConversation,
 } from "../store/conversations.js";
 import { resolveCountry } from "../services/country.js";
+import { pipeline } from "stream";
+import { promisify } from "util";
 
+const streamPipeline = promisify(pipeline);
 const router = express.Router();
 
 /**
@@ -82,16 +85,32 @@ router.post("/", async (req, res) => {
     if (!message) return;
 
     const from = message.from;
-    const text = message.text?.body || null;
+    const type = message.type;
+
+    let text = null;
+    let mediaId = null;
+    let mediaType = null;
+
+    if (type === "text") {
+      text = message.text?.body;
+    } else if (type === "image") {
+      mediaId = message.image?.id;
+      mediaType = "image";
+    } else if (type === "video") {
+      mediaId = message.video?.id;
+      mediaType = "video";
+    } else if (type === "document") {
+      mediaId = message.document?.id;
+      mediaType = "document";
+    } else if (type === "audio") {
+      mediaId = message.audio?.id;
+      mediaType = "audio";
+    }
 
     // ✅ reject invalid sender
     if (!from || typeof from !== "string") return;
 
     // ✅ optional: ignore non-text safely
-    if (!text) {
-      console.log("⚠️ Non-text message ignored:", message.type);
-      return;
-    }
 
     /* =========================
        🌍 COUNTRY (SAFE + ONCE)
@@ -111,7 +130,10 @@ router.post("/", async (req, res) => {
     /* =========================
        💾 SAVE INCOMING
     ========================= */
-    await addMessage(from, "incoming", text);
+    await addMessage(from, "incoming", text, null, null, {
+      mediaId,
+      mediaType,
+    });
 
     /* =========================
        🤖 ASYNC RESPONSE (NON-BLOCKING)
@@ -126,20 +148,20 @@ router.post("/", async (req, res) => {
    AND status = 'active'
    ORDER BY created_at DESC
    LIMIT 1`,
-          [from]
+          [from],
         );
 
         const convo = convoCheck.rows[0];
 
         // 🚫 If assigned to department → HUMAN MODE → STOP AI
         if (convo?.department_id) {
-          const lower = text.toLowerCase();
+          const lower = (text || "").toLowerCase();
 
           // ✅ allow re-entry trigger
           const triggerWords = ["hr", "finance", "support", "department"];
 
-          const wantsNewDept = triggerWords.some(word =>
-            lower.includes(word)
+          const wantsNewDept = triggerWords.some((word) =>
+            lower.includes(word),
           );
 
           if (!wantsNewDept) {
@@ -154,7 +176,7 @@ router.post("/", async (req, res) => {
          ended_at = NOW()
      WHERE sender_id = $1
      AND status = 'active'`,
-            [from]
+            [from],
           );
 
           console.log("🔁 Switching back to AI routing");
@@ -260,19 +282,68 @@ router.get("/conversations/:id/messages", async (req, res) => {
   try {
     const messages = await pool.query(
       `
-      SELECT direction, text, status, created_at
-      FROM messages
-      WHERE conversation_id = $1
-      ORDER BY created_at ASC
-      `,
+  SELECT direction, text, status, created_at, media_id, media_type
+  FROM messages
+  WHERE conversation_id = $1
+  ORDER BY created_at ASC
+  `,
       [id],
     );
 
-    res.json(messages.rows);
+    // 🔥 ADD THIS BLOCK
+    const messagesWithMedia = await Promise.all(
+      messages.rows.map(async (msg) => {
+        if (msg.media_id) {
+          try {
+            const url = await getMediaUrl(msg.media_id);
+            return { ...msg, media_url: url };
+          } catch (err) {
+            console.error("Media fetch failed:", err);
+            return msg;
+          }
+        }
+        return msg;
+      }),
+    );
+
+    res.json(messagesWithMedia);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch messages" });
   }
 });
+router.get("/media/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const metaRes = await fetch(`https://graph.facebook.com/v19.0/${id}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+      },
+    });
+
+    const metaData = await metaRes.json();
+
+    if (!metaData.url) {
+      return res.status(400).json({ error: "Invalid media ID" });
+    }
+
+    const fileRes = await fetch(metaData.url, {
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+      },
+    });
+
+    res.setHeader(
+      "Content-Type",
+      fileRes.headers.get("content-type") || "application/octet-stream",
+    );
+
+    // ✅ FIXED STREAMING
+    await streamPipeline(fileRes.body, res);
+  } catch (err) {
+    console.error("Media proxy error:", err);
+    res.status(500).json({ error: "Failed to fetch media" });
+  }
+});
 export default router;

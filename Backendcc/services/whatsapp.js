@@ -183,3 +183,15 @@ export async function uploadMedia(filePath) {
     throw err;
   }
 }
+
+export async function getMediaUrl(mediaId) {
+  const res = await fetch(`https://graph.facebook.com/v19.0/${mediaId}`, {
+    headers: {
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    },
+  });
+
+  const data = await res.json();
+
+  return data.url;
+}
