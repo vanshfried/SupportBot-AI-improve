@@ -24,9 +24,9 @@ const upload = multer({
 /**
  * 📤 REPLY TO USER
  */
-router.post("/reply", upload.single("file"), async (req, res) => {
+router.post("/reply", upload.array("files", 5), async (req, res) => {
   const { to, message } = req.body;
-  const file = req.file;
+  const files = req.files || [];
 
   // =========================
   // ✅ VALIDATION
@@ -35,8 +35,7 @@ router.post("/reply", upload.single("file"), async (req, res) => {
     return res.status(400).json({ error: "Invalid recipient" });
   }
 
-  // ✅ allow message OR file (IMPORTANT FIX)
-  if ((!message || !message.trim()) && !file) {
+  if ((!message || !message.trim()) && files.length === 0) {
     return res.status(400).json({
       error: "Message or file is required",
     });
@@ -170,30 +169,30 @@ router.post("/reply", upload.single("file"), async (req, res) => {
     }
 
     // =========================
-    // 📤 HANDLE MEDIA (🔥 NEW)
+    // 📤 HANDLE MEDIA
     // =========================
-    let media = null;
+    let mediaList = [];
 
-    if (file) {
-      try {
-        const uploadRes = await uploadMedia(file.path);
+    if (files.length > 0) {
+      for (const file of files) {
+        try {
+          const uploadRes = await uploadMedia(file.path);
 
-        media = {
-          id: uploadRes.id,
-          mimeType: uploadRes.mimeType,
-          filename: uploadRes.filename,
-        };
-      } catch (err) {
-        // cleanup on failure
-        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+          mediaList.push({
+            id: uploadRes.id,
+            mimeType: uploadRes.mimeType,
+            filename: uploadRes.filename,
+          });
 
-        return res.status(500).json({
-          error: err.message,
-        });
+          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        } catch (err) {
+          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+
+          return res.status(500).json({
+            error: err.message,
+          });
+        }
       }
-
-      // cleanup after upload
-      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
     }
 
     // =========================
@@ -201,25 +200,31 @@ router.post("/reply", upload.single("file"), async (req, res) => {
     // =========================
     const cleanMessage = message?.trim() || null;
 
-    const messageId = await sendMessage(
-      to,
-      cleanMessage,
-      media, // 🔥 key change
-    );
+    // ✅ 1. Send text
+    if (cleanMessage) {
+      const textId = await sendMessage(to, cleanMessage, null);
 
-    if (!messageId) {
-      return res.status(500).json({
-        error: "Failed to send message",
-      });
+      if (!textId) {
+        return res.status(500).json({
+          error: "Failed to send text message",
+        });
+      }
+
+      await addMessage(to, "outgoing", cleanMessage, textId, "sent");
     }
 
-    await addMessage(
-      to,
-      "outgoing",
-      cleanMessage || "[media]",
-      messageId,
-      "sent",
-    );
+    // ✅ 2. Send media (1 by 1)
+    for (const media of mediaList) {
+      const msgId = await sendMessage(to, null, media);
+
+      if (!msgId) {
+        return res.status(500).json({
+          error: "Failed to send media",
+        });
+      }
+
+      await addMessage(to, "outgoing", "[media]", msgId, "sent");
+    }
 
     // =========================
     // ⏱️ TRACK ACTIVITY

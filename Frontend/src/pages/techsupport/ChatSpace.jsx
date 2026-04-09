@@ -27,7 +27,7 @@ function ChatSpace() {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -113,38 +113,36 @@ function ChatSpace() {
     console.log("📤 Sending:", {
       to: selectedChat.sender_id,
       message,
-      file,
+      files,
       force,
     });
-    if (!message.trim() && !file) return;
+
+    if (!message.trim() && files.length === 0) return;
 
     try {
       const formData = new FormData();
       formData.append("to", selectedChat.sender_id);
       formData.append("message", message);
 
-      if (file) {
-        formData.append("file", file); // 🔥 SAME AS COMPOSE
-      }
+      files.forEach((f) => {
+        formData.append("files", f);
+      });
 
-      await sendReply(formData, force); // 🔥 changed
-      console.log("✅ Message sent successfully");
+      await sendReply(formData, force);
 
       setMessage("");
-      setFile(null);
+      setFiles([]);
 
       const data = await fetchMessages(selectedChat.id);
       setMessages(data);
     } catch (error) {
       console.error("❌ Send error:", error);
 
-      // 🔥 backend error message
       const backendMsg =
         error?.response?.data?.error || error?.message || "Unknown error";
 
       alert(`❌ ${backendMsg}`);
 
-      // takeover logic
       if (error?.response?.data?.error?.includes("active")) {
         openModal(`Take over chat from ${selectedChat.assigned_role}?`, () =>
           handleSendReply(true),
@@ -365,20 +363,31 @@ function ChatSpace() {
           <input
             ref={fileInputRef}
             type="file"
+            multiple
             onChange={(e) => {
-              const selected = e.target.files[0];
-              if (!selected) return;
+              const selectedFiles = Array.from(e.target.files);
 
-              if (selected.size > 100 * 1024 * 1024) {
-                alert("File too large (max 100MB)");
+              if (selectedFiles.length > 5) {
+                alert("Max 5 files allowed");
                 return;
               }
 
-              setFile(selected);
+              for (let f of selectedFiles) {
+                if (f.size > 100 * 1024 * 1024) {
+                  alert(`${f.name} is too large`);
+                  return;
+                }
+              }
+
+              setFiles(selectedFiles);
             }}
           />
 
-          {file && <div style={{ fontSize: "12px" }}>📎 {file.name}</div>}
+          {files.length > 0 && (
+            <div style={{ fontSize: "12px" }}>
+              📎 {files.map((f) => f.name).join(", ")}
+            </div>
+          )}
 
           <button
             className={styles.sendBtn}
