@@ -210,7 +210,16 @@ router.post("/reply", upload.array("files", 5), async (req, res) => {
         });
       }
 
-      await addMessage(to, "outgoing", cleanMessage, textId, "sent");
+      await addMessage(
+        to,
+        "outgoing",
+        cleanMessage,
+        textId,
+        "sent",
+        null,
+        "agent",
+        user.id,
+      );
     }
 
     // ✅ 2. Send media (1 by 1)
@@ -223,7 +232,16 @@ router.post("/reply", upload.array("files", 5), async (req, res) => {
         });
       }
 
-      await addMessage(to, "outgoing", "[media]", msgId, "sent");
+      await addMessage(
+        to,
+        "outgoing",
+        "[media]",
+        msgId,
+        "sent",
+        null,
+        "agent",
+        user.id,
+      );
     }
 
     // =========================

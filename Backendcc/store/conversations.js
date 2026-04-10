@@ -105,14 +105,22 @@ export async function addMessage(
   whatsappMessageId = null,
   status = null,
   media = null,
+  senderType = null, // 🔥 NEW
+  senderId = null, // 🔥 NEW
 ) {
   try {
     const conversationId = await getOrCreateConversation(phone);
 
+    // 🧠 AUTO DETECT (BACKWARD COMPATIBLE)
+    if (!senderType) {
+      if (direction === "incoming") senderType = "user";
+      else senderType = "agent"; // default fallback
+    }
+
     await pool.query(
       `INSERT INTO messages 
-(conversation_id, direction, text, whatsapp_message_id, status, media_id, media_type)
-VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+(conversation_id, direction, text, whatsapp_message_id, status, media_id, media_type, sender_type, sender_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         conversationId,
         direction,
@@ -121,10 +129,12 @@ VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         status,
         media?.mediaId || null,
         media?.mediaType || null,
+        senderType,
+        senderId,
       ],
     );
 
-    console.log("✅ Saved:", phone, direction, "→", conversationId);
+    console.log("✅ Saved:", phone, direction, senderType, "→", conversationId);
   } catch (err) {
     console.error("❌ DB insert error:", err.message);
   }

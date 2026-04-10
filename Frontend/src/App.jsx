@@ -5,6 +5,7 @@ import CreateUser from "./pages/OpenPages/admin/CreateUser";
 import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./pages/OpenPages/admin/Dashboard";
 import Compose from "./pages/techsupport/Compose";
+import AnalyticsArea from "./pages/OpenPages/admin/analytics";
 function App() {
   return (
     <Router>
@@ -47,6 +48,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["support", "admin", "superadmin"]}>
               <Compose />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+              <AnalyticsArea />
             </ProtectedRoute>
           }
         />

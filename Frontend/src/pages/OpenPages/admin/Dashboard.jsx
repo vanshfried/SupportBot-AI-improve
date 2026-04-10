@@ -43,6 +43,13 @@ function Dashboard() {
             👑
             <span>Create User</span>
           </div>
+          <div
+            className={styles.menuItem}
+            onClick={() => navigate("/analytics")}
+          >
+            �
+            <span>Analytics</span>
+          </div>
 
         </div>
 
@@ -78,6 +85,15 @@ function Dashboard() {
               <div className={styles.cardIcon}>👑</div>
               <h3>Create User</h3>
               <p>Add support agents and admins</p>
+            </div>
+
+            <div
+              className={styles.card}
+              onClick={() => navigate("/analytics")}
+            >
+              <div className={styles.cardIcon}>�</div>
+              <h3>Analytics</h3>
+              <p>View performance metrics and reports</p>
             </div>
 
           </div>
