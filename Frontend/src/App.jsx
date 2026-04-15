@@ -7,6 +7,7 @@ import Dashboard from "./pages/OpenPages/admin/Dashboard";
 import Compose from "./pages/techsupport/Compose";
 import AnalyticsArea from "./pages/OpenPages/admin/analytics";
 import DepartmentDetails from "./pages/OpenPages/admin/DepartmentDetails";
+import Profile from "./pages/OpenPages/Profile";
 function App() {
   return (
     <Router>
@@ -49,6 +50,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["support", "admin", "superadmin"]}>
               <Compose />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={["support", "admin", "superadmin"]}>
+              <Profile />
             </ProtectedRoute>
           }
         />

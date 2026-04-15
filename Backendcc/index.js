@@ -12,7 +12,7 @@ import { pool } from "./db.js";
 import pgSession from "connect-pg-simple";
 import composeRoutes from "./routes/compose/compose.js";
 import analyticsRoutes from "./routes/analytics/analytics.js";
-
+import ProfileRoutes from "./routes/analytics/profile.js";
 const PgSession = pgSession(session);
 dotenv.config();
 
@@ -63,7 +63,7 @@ app.use("/superadmin", superadminRoutes);
 app.use("/meta", metaroutes);
 app.use("/compose", composeRoutes);
 app.use("/analytics", analyticsRoutes);
-
+app.use("/profile", ProfileRoutes);
 app.use((req, res) => {
   res.status(404).json({
     error: "Route not found",
